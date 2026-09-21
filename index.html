@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Calculate the experience required between any two levels in World of Warcraft: Forever.">
+  <meta name="theme-color" content="#111820">
+  <title>WoW Forever XP Calculator</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111820'/%3E%3Cpath d='M32 6 56 32 32 58 8 32Z' fill='%23d8aa45'/%3E%3Cpath d='M32 14 48 32 32 50 16 32Z' fill='%231a2631'/%3E%3Ctext x='32' y='38' text-anchor='middle' font-family='Arial' font-size='17' font-weight='700' fill='%23f4d995'%3EXP%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1015;
+      --surface: #111820;
+      --surface-raised: #17222c;
+      --surface-soft: #1c2934;
+      --gold: #d8aa45;
+      --gold-light: #f4d995;
+      --gold-muted: #9c7a36;
+      --teal: #5fa9a2;
+      --text: #f5f0e6;
+      --muted: #aeb7bd;
+      --line: #31404b;
+      --danger: #ef8d7d;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .42);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(95, 169, 162, .13), transparent 38rem),
+        var(--bg);
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button,
+    a,
+    select,
+    input {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(244, 217, 149, .72);
+      outline-offset: 3px;
+    }
+
+    .page-shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 48px;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      flex: 0 0 auto;
+      border: 1px solid var(--gold-muted);
+      border-radius: 14px;
+      color: var(--gold-light);
+      background: var(--surface-raised);
+      box-shadow: inset 0 0 0 4px rgba(216, 170, 69, .06);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      color: var(--gold-light);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.65rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -.025em;
+    }
+
+    .masthead p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: .98rem;
+    }
+
+    .workspace {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .calculator {
+      padding: clamp(24px, 5vw, 44px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .level-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+      align-items: end;
+      gap: 18px;
+      max-width: 760px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: .88rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      position: absolute;
+      top: 50%;
+      right: 18px;
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid var(--gold);
+      border-bottom: 2px solid var(--gold);
+      content: "";
+      pointer-events: none;
+      transform: translateY(-70%) rotate(45deg);
+    }
+
+    select {
+      width: 100%;
+      min-height: 72px;
+      appearance: none;
+      border: 1px solid #40515e;
+      border-radius: 14px;
+      padding: 0 50px 0 20px;
+      color: var(--text);
+      background: var(--surface-raised);
+      cursor: pointer;
+      font-size: 1.3rem;
+      font-weight: 700;
+      transition: border-color .16s ease, background-color .16s ease;
+    }
+
+    select:hover {
+      border-color: var(--gold-muted);
+      background: var(--surface-soft);
+    }
+
+    .direction {
+      display: grid;
+      place-items: center;
+      min-height: 72px;
+      color: var(--gold);
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+
+    .quick-picks {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .grind-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      max-width: 760px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      min-height: 62px;
+      border: 1px solid #40515e;
+      border-radius: 14px;
+      padding: 0 92px 0 20px;
+      color: var(--text);
+      background: var(--surface-raised);
+      font-size: 1.18rem;
+      font-weight: 700;
+      transition: border-color .16s ease, background-color .16s ease;
+    }
+
+    input[type="number"]:hover {
+      border-color: var(--gold-muted);
+      background: var(--surface-soft);
+    }
+
+    .input-suffix {
+      position: absolute;
+      top: 50%;
+      right: 18px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      pointer-events: none;
+      text-transform: uppercase;
+      transform: translateY(-50%);
+    }
+
+    .grind-controls select {
+      min-height: 62px;
+      font-size: 1.08rem;
+    }
+
+    .field-hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .duration-toggle {
+      grid-column: 1 / -1;
+    }
+
+    .toggle-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .toggle-control input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex: 0 0 auto;
+      border: 1px solid #40515e;
+      border-radius: 999px;
+      background: var(--surface-raised);
+      transition: border-color .16s ease, background-color .16s ease;
+    }
+
+    .toggle-switch::after {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      content: "";
+      transition: background-color .16s ease, transform .16s ease;
+    }
+
+    .toggle-control:hover .toggle-switch {
+      border-color: var(--gold-muted);
+    }
+
+    .toggle-control input:checked + .toggle-switch {
+      border-color: var(--gold-muted);
+      background: rgba(216, 170, 69, .18);
+    }
+
+    .toggle-control input:checked + .toggle-switch::after {
+      background: var(--gold-light);
+      transform: translateX(20px);
+    }
+
+    .toggle-control input:focus-visible + .toggle-switch {
+      outline: 3px solid rgba(244, 217, 149, .72);
+      outline-offset: 3px;
+    }
+
+    .quick-label {
+      margin-right: 3px;
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 700;
+    }
+
+    .quick-pick,
+    .copy-button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: var(--text);
+      background: transparent;
+      cursor: pointer;
+      font-size: .86rem;
+      font-weight: 700;
+      transition: color .16s ease, border-color .16s ease, background-color .16s ease;
+    }
+
+    .quick-pick:hover,
+    .copy-button:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-light);
+      background: rgba(216, 170, 69, .07);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, .8fr);
+      gap: 30px;
+      padding: clamp(24px, 5vw, 44px);
+      background: #0e151b;
+    }
+
+    .result-eyebrow {
+      margin-bottom: 10px;
+      color: var(--teal);
+      font-size: .84rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .xp-total {
+      margin-bottom: 7px;
+      color: var(--gold-light);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.55rem, 8vw, 5.3rem);
+      font-variant-numeric: tabular-nums;
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+
+    .xp-caption {
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .journey {
+      max-width: 650px;
+    }
+
+    .journey-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .track {
+      position: relative;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #25313a;
+    }
+
+    .track-range {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      min-width: 4px;
+      border-radius: inherit;
+      background: var(--gold);
+    }
+
+    .time-card {
+      display: flex;
+      min-height: 220px;
+      flex-direction: column;
+      justify-content: center;
+      border: 1px solid var(--gold-muted);
+      border-radius: var(--radius);
+      padding: clamp(22px, 4vw, 30px);
+      background: var(--surface-raised);
+      box-shadow: inset 0 0 0 4px rgba(216, 170, 69, .035);
+    }
+
+    .time-total {
+      margin: 2px 0 8px;
+      color: var(--gold-light);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      letter-spacing: -.035em;
+    }
+
+    .time-assumption {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .stat-panel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-raised);
+    }
+
+    .stat {
+      display: flex;
+      min-height: 118px;
+      flex-direction: column;
+      justify-content: center;
+      padding: 22px;
+    }
+
+    .stat:not(:last-child) {
+      border-right: 1px solid var(--line);
+    }
+
+    .stat-value {
+      margin-bottom: 5px;
+      color: var(--text);
+      font-size: clamp(1.2rem, 3vw, 1.65rem);
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.025em;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .details {
+      padding: clamp(24px, 5vw, 44px);
+    }
+
+    .details-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.45rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th,
+    td {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      background: #121b23;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: #dce1e3;
+      font-size: .95rem;
+    }
+
+    td:nth-child(n + 2),
+    th:nth-child(n + 2) {
+      text-align: right;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover td {
+      background: rgba(95, 169, 162, .045);
+    }
+
+    .level-step {
+      color: var(--gold-light);
+      font-weight: 750;
+    }
+
+    .no-xp {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .source-note {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.65;
+    }
+
+    .source-note a {
+      color: #b9d9d5;
+      text-underline-offset: 3px;
+    }
+
+    .source-note a:hover {
+      color: var(--gold-light);
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 10;
+      max-width: calc(100vw - 40px);
+      border: 1px solid var(--gold-muted);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--gold-light);
+      background: #131c24;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, .45);
+      font-size: .9rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 760px) {
+      .page-shell {
+        width: min(100% - 20px, 1120px);
+        padding-top: 22px;
+      }
+
+      .masthead {
+        align-items: flex-start;
+      }
+
+      .mark {
+        width: 44px;
+        height: 44px;
+      }
+
+      .workspace {
+        border-radius: 18px;
+      }
+
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-panel {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stat:nth-child(2) {
+        border-right: 0;
+      }
+
+      .stat:nth-child(-n + 2) {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .stat {
+        min-height: 100px;
+        padding: 17px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .level-controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .grind-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .direction {
+        min-height: 20px;
+        transform: rotate(90deg);
+      }
+
+      select {
+        min-height: 62px;
+      }
+
+      .details-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .copy-button {
+        width: 100%;
+      }
+
+      .stat {
+        min-height: 92px;
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="masthead">
+      <div class="mark" aria-hidden="true">XP</div>
+      <div>
+        <h1>WoW Forever XP Calculator</h1>
+        <p>Experience and mob-grinding time between any two levels.</p>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Experience calculator">
+      <div class="calculator">
+        <div class="level-controls">
+          <div class="field">
+            <label for="from-level">From level</label>
+            <div class="select-wrap">
+              <select id="from-level" aria-label="Starting level"></select>
+            </div>
+          </div>
+
+          <div class="direction" aria-hidden="true">→</div>
+
+          <div class="field">
+            <label for="to-level">To level</label>
+            <div class="select-wrap">
+              <select id="to-level" aria-label="Target level"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-picks" aria-label="Quick level ranges">
+          <span class="quick-label">Quick ranges</span>
+          <button class="quick-pick" type="button" data-from="1" data-to="10">1–10</button>
+          <button class="quick-pick" type="button" data-from="1" data-to="20">1–20</button>
+          <button class="quick-pick" type="button" data-from="1" data-to="40">1–40</button>
+          <button class="quick-pick" type="button" data-from="1" data-to="60">1–60</button>
+          <button class="quick-pick" type="button" data-from="40" data-to="60">40–60</button>
+        </div>
+
+        <div class="grind-controls" aria-label="Grinding assumptions">
+          <div class="field">
+            <label for="kill-seconds">Average time per mob</label>
+            <div class="input-wrap">
+              <input id="kill-seconds" type="number" min="1" max="3600" step="1" value="30" inputmode="numeric" aria-describedby="kill-time-hint">
+              <span class="input-suffix">seconds</span>
+            </div>
+            <p class="field-hint" id="kill-time-hint">Kill time only; travel and recovery are not included.</p>
+          </div>
+
+          <div class="field">
+            <label for="mob-offset">Mob level relative to you</label>
+            <div class="select-wrap">
+              <select id="mob-offset" aria-describedby="mob-level-hint"></select>
+            </div>
+            <p class="field-hint" id="mob-level-hint">Only XP-granting mob levels available throughout the selected range are shown. The XP bonus caps at 4 levels higher.</p>
+          </div>
+
+          <div class="duration-toggle">
+            <label class="toggle-control" for="show-days">
+              <input id="show-days" type="checkbox">
+              <span class="toggle-switch" aria-hidden="true"></span>
+              <span>Show durations of 24+ hours as days</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-grid" aria-live="polite">
+        <div>
+          <p class="result-eyebrow" id="range-label">Level 1 to 60</p>
+          <p class="xp-total" id="xp-total">4,084,700</p>
+          <p class="xp-caption">experience required</p>
+
+          <div class="journey">
+            <div class="journey-labels">
+              <span>Level 1</span>
+              <span id="journey-share">100% of the 1–60 journey</span>
+              <span>Level 60</span>
+            </div>
+            <div class="track" aria-hidden="true">
+              <div class="track-range" id="track-range"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="time-card">
+          <p class="result-eyebrow">Estimated grinding time</p>
+          <p class="time-total" id="time-total">—</p>
+          <p class="time-assumption" id="time-assumption">Based on ordinary solo mobs.</p>
+        </div>
+      </div>
+
+      <div class="stat-panel" aria-label="Range statistics">
+        <div class="stat">
+          <span class="stat-value" id="total-kills">—</span>
+          <span class="stat-label">Mobs required</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="average-mob-xp">—</span>
+          <span class="stat-label">Average XP / mob</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="levels-crossed">59</span>
+          <span class="stat-label">Levels crossed</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="kill-time-stat">30s</span>
+          <span class="stat-label">Time per mob</span>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="details-heading">
+          <h2>Level breakdown</h2>
+          <button class="copy-button" id="copy-result" type="button">Copy result</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Level</th>
+                <th scope="col">Mob</th>
+                <th scope="col">XP needed</th>
+                <th scope="col">XP / mob</th>
+                <th scope="col">Mobs</th>
+                <th scope="col">Level time</th>
+                <th scope="col">Total time</th>
+              </tr>
+            </thead>
+            <tbody id="breakdown"></tbody>
+          </table>
+        </div>
+
+        <p class="source-note">
+          WoW Forever uses the original experience curve, as confirmed by game director Kris Zierhut.
+          XP values use the established Classic 1–60 table. Time estimates assume ordinary solo, non-elite mobs and exclude quests, rested XP, groups, travel, and recovery.
+          <a href="https://www.thesun.co.uk/tech/40367702/world-of-warcraft-forever-interview-zones-races-skills-levelling/" target="_blank" rel="noreferrer">Forever interview</a>
+          ·
+          <a href="https://barrens.chat/viewtopic.php?t=3082" target="_blank" rel="noreferrer">XP table</a>
+          ·
+          <a href="https://github.com/vmangos/core/blob/development/src/game/Formulas.h" target="_blank" rel="noreferrer">Mob XP formula</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Result copied</div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // XP required to advance from each level (1 through 59) to the next.
+      const xpByLevel = [
+        400, 900, 1400, 2100, 2800, 3600, 4500, 5400, 6500, 7600,
+        8800, 10100, 11400, 12900, 14400, 16000, 17700, 19400, 21300, 23200,
+        25200, 27300, 29400, 31700, 34000, 36400, 38900, 41400, 44300, 47400,
+        50800, 54500, 58600, 62800, 67100, 71600, 76100, 80800, 85700, 90700,
+        95800, 101000, 106300, 111800, 117500, 123200, 129100, 135100, 141200, 147500,
+        153900, 160400, 167100, 173900, 180800, 187900, 195000, 202300, 209800
+      ];
+
+      const fullJourneyXp = xpByLevel.reduce((sum, xp) => sum + xp, 0);
+      const number = new Intl.NumberFormat("en-US");
+      const fromSelect = document.querySelector("#from-level");
+      const toSelect = document.querySelector("#to-level");
+      const killSecondsInput = document.querySelector("#kill-seconds");
+      const mobOffsetSelect = document.querySelector("#mob-offset");
+      const showDaysToggle = document.querySelector("#show-days");
+      const breakdown = document.querySelector("#breakdown");
+      const toast = document.querySelector("#toast");
+      let toastTimer;
+
+      function buildOptions() {
+        for (let level = 1; level <= 60; level += 1) {
+          const fromOption = new Option(`Level ${level}`, String(level));
+          const toOption = new Option(`Level ${level}`, String(level));
+          fromSelect.add(fromOption);
+          toSelect.add(toOption);
+        }
+
+        fromSelect.value = "1";
+        toSelect.value = "60";
+
+      }
+
+      function cumulativeXpAt(level) {
+        return xpByLevel.slice(0, Math.max(0, level - 1)).reduce((sum, xp) => sum + xp, 0);
+      }
+
+      function grayLevel(playerLevel) {
+        if (playerLevel <= 5) return 0;
+        if (playerLevel <= 39) return playerLevel - 5 - Math.floor(playerLevel / 10);
+        return playerLevel - 1 - Math.floor(playerLevel / 5);
+      }
+
+      function zeroDifference(playerLevel) {
+        if (playerLevel < 8) return 5;
+        if (playerLevel < 10) return 6;
+        if (playerLevel < 12) return 7;
+        if (playerLevel < 16) return 8;
+        if (playerLevel < 20) return 9;
+        if (playerLevel < 30) return 11;
+        if (playerLevel < 40) return 12;
+        if (playerLevel < 45) return 13;
+        if (playerLevel < 50) return 14;
+        if (playerLevel < 55) return 15;
+        if (playerLevel < 60) return 16;
+        return 17;
+      }
+
+      function roundToEven(value) {
+        const floor = Math.floor(value);
+        const fraction = value - floor;
+        if (Math.abs(fraction - 0.5) < 1e-9) {
+          return floor % 2 === 0 ? floor : floor + 1;
+        }
+        return Math.round(value);
+      }
+
+      function mobXpAt(playerLevel, offset) {
+        const mobLevel = playerLevel + offset;
+        if (mobLevel < 1) return { mobLevel, xp: 0, reason: "No such mob" };
+
+        let factor = 0;
+        if (mobLevel >= playerLevel) {
+          factor = 1 + 0.05 * Math.min(mobLevel - playerLevel, 4);
+        } else if (mobLevel > grayLevel(playerLevel)) {
+          const zd = zeroDifference(playerLevel);
+          factor = (zd + mobLevel - playerLevel) / zd;
+        }
+
+        const xp = roundToEven((playerLevel * 5 + 45) * factor);
+        return { mobLevel, xp, reason: xp === 0 ? "Gray" : "" };
+      }
+
+      function mobOffsetLabel(offset) {
+        if (offset < 0) return `${Math.abs(offset)} level${offset === -1 ? "" : "s"} lower`;
+        if (offset > 0) return `${offset} level${offset === 1 ? "" : "s"} higher`;
+        return "Same level";
+      }
+
+      function updateMobOffsetOptions() {
+        const from = Number(fromSelect.value);
+        const to = Number(toSelect.value);
+        const previousOffset = Number(mobOffsetSelect.value);
+        const validOffsets = [];
+
+        for (let offset = -10; offset <= 5; offset += 1) {
+          let grantsXpThroughoutRange = true;
+          for (let level = from; level < to; level += 1) {
+            if (mobXpAt(level, offset).xp === 0) {
+              grantsXpThroughoutRange = false;
+              break;
+            }
+          }
+          if (grantsXpThroughoutRange) validOffsets.push(offset);
+        }
+
+        mobOffsetSelect.replaceChildren(...validOffsets.map((offset) => (
+          new Option(mobOffsetLabel(offset), String(offset))
+        )));
+
+        const nextOffset = validOffsets.includes(previousOffset)
+          ? previousOffset
+          : validOffsets.reduce((closest, offset) => (
+            Math.abs(offset - previousOffset) < Math.abs(closest - previousOffset) ? offset : closest
+          ), 0);
+        mobOffsetSelect.value = String(nextOffset);
+      }
+
+      function formatDuration(totalSeconds) {
+        if (totalSeconds === null || !Number.isFinite(totalSeconds)) return "Not possible";
+        if (showDaysToggle.checked && totalSeconds >= 86400) {
+          const days = Math.floor(totalSeconds / 86400);
+          const hours = Math.floor((totalSeconds % 86400) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          return `${number.format(days)}d ${hours}h ${minutes}m`;
+        }
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.round(totalSeconds % 60);
+        if (hours > 0) return `${number.format(hours)}h ${minutes}m`;
+        if (minutes > 0) return `${minutes}m ${seconds}s`;
+        return `${seconds}s`;
+      }
+
+      function currentKillSeconds() {
+        const parsed = Number(killSecondsInput.value);
+        return Number.isFinite(parsed) && parsed > 0 ? Math.min(3600, parsed) : 30;
+      }
+
+      function calculate(from, to, killSeconds = currentKillSeconds(), offset = Number(mobOffsetSelect.value)) {
+        const rows = [];
+        let runningTotal = 0;
+        let runningSeconds = 0;
+        let totalKills = 0;
+        let allReachable = true;
+
+        for (let level = from; level < to; level += 1) {
+          const xp = xpByLevel[level - 1];
+          const mob = mobXpAt(level, offset);
+          const kills = mob.xp > 0 ? Math.ceil(xp / mob.xp) : null;
+          const seconds = kills === null ? null : kills * killSeconds;
+          runningTotal += xp;
+          if (kills === null) {
+            allReachable = false;
+          } else {
+            totalKills += kills;
+            runningSeconds += seconds;
+          }
+          rows.push({
+            level,
+            nextLevel: level + 1,
+            xp,
+            runningTotal,
+            mobLevel: mob.mobLevel,
+            mobXp: mob.xp,
+            mobReason: mob.reason,
+            kills,
+            seconds,
+            runningSeconds: allReachable ? runningSeconds : null
+          });
+        }
+
+        const reachableRows = rows.filter((row) => row.mobXp > 0);
+        const averageMobXp = reachableRows.length
+          ? Math.round(reachableRows.reduce((sum, row) => sum + row.mobXp, 0) / reachableRows.length)
+          : 0;
+        return {
+          rows,
+          total: runningTotal,
+          totalKills: allReachable ? totalKills : null,
+          totalSeconds: allReachable ? runningSeconds : null,
+          averageMobXp,
+          allReachable
+        };
+      }
+
+      function render() {
+        const from = Number(fromSelect.value);
+        const to = Number(toSelect.value);
+        const killSeconds = currentKillSeconds();
+        const offset = Number(mobOffsetSelect.value);
+        const { rows, total, totalKills, totalSeconds, averageMobXp, allReachable } = calculate(from, to, killSeconds, offset);
+        const levelCount = to - from;
+        const startJourneyXp = cumulativeXpAt(from);
+        const endJourneyXp = cumulativeXpAt(to);
+        const startPercent = (startJourneyXp / fullJourneyXp) * 100;
+        const widthPercent = ((endJourneyXp - startJourneyXp) / fullJourneyXp) * 100;
+
+        document.querySelector("#range-label").textContent = `Level ${from} to ${to}`;
+        document.querySelector("#xp-total").textContent = number.format(total);
+        document.querySelector("#levels-crossed").textContent = number.format(levelCount);
+        document.querySelector("#time-total").textContent = formatDuration(totalSeconds);
+        document.querySelector("#total-kills").textContent = totalKills === null ? "—" : number.format(totalKills);
+        document.querySelector("#average-mob-xp").textContent = averageMobXp ? number.format(averageMobXp) : "—";
+        document.querySelector("#kill-time-stat").textContent = `${number.format(killSeconds)}s`;
+        document.querySelector("#time-assumption").textContent = allReachable
+          ? `${number.format(totalKills)} ordinary solo mobs at ${number.format(killSeconds)} seconds each.`
+          : "These mobs give no XP at one or more selected levels.";
+        document.querySelector("#journey-share").textContent = `${(total / fullJourneyXp * 100).toFixed(1).replace(".0", "")}% of the 1–60 journey`;
+
+        const trackRange = document.querySelector("#track-range");
+        trackRange.style.left = `${startPercent}%`;
+        trackRange.style.width = `${widthPercent}%`;
+
+        breakdown.replaceChildren(...rows.map((row) => {
+          const tr = document.createElement("tr");
+          const stepCell = document.createElement("td");
+          const mobCell = document.createElement("td");
+          const xpCell = document.createElement("td");
+          const mobXpCell = document.createElement("td");
+          const killsCell = document.createElement("td");
+          const timeCell = document.createElement("td");
+          const cumulativeTimeCell = document.createElement("td");
+
+          stepCell.className = "level-step";
+          stepCell.textContent = `${row.level} → ${row.nextLevel}`;
+          mobCell.textContent = row.mobLevel < 1 ? "None" : `Level ${row.mobLevel}`;
+          xpCell.textContent = number.format(row.xp);
+          mobXpCell.textContent = row.mobXp > 0 ? number.format(row.mobXp) : row.mobReason;
+          killsCell.textContent = row.kills === null ? "—" : number.format(row.kills);
+          timeCell.textContent = formatDuration(row.seconds);
+          cumulativeTimeCell.textContent = formatDuration(row.runningSeconds);
+          if (row.mobXp === 0) {
+            mobCell.classList.add("no-xp");
+            mobXpCell.classList.add("no-xp");
+            timeCell.classList.add("no-xp");
+          }
+          tr.append(stepCell, mobCell, xpCell, mobXpCell, killsCell, timeCell, cumulativeTimeCell);
+          return tr;
+        }));
+      }
+
+      function setRange(from, to) {
+        fromSelect.value = String(from);
+        toSelect.value = String(to);
+        updateMobOffsetOptions();
+        render();
+      }
+
+      function keepRangeValid(changedSelect) {
+        let from = Number(fromSelect.value);
+        let to = Number(toSelect.value);
+
+        if (from >= to && changedSelect === fromSelect) {
+          to = Math.min(60, from + 1);
+          if (from === 60) {
+            from = 59;
+          }
+        } else if (to <= from) {
+          from = Math.max(1, to - 1);
+          if (to === 1) {
+            to = 2;
+          }
+        }
+
+        setRange(from, to);
+      }
+
+      async function copyResult() {
+        const from = Number(fromSelect.value);
+        const to = Number(toSelect.value);
+        const offset = Number(mobOffsetSelect.value);
+        const killSeconds = currentKillSeconds();
+        const { total, totalKills, totalSeconds } = calculate(from, to, killSeconds, offset);
+        const offsetText = offset === 0 ? "same-level mobs" : `mobs ${Math.abs(offset)} level${Math.abs(offset) === 1 ? "" : "s"} ${offset > 0 ? "higher" : "lower"}`;
+        const timeText = totalSeconds === null ? "not possible with this mob level" : `${formatDuration(totalSeconds)} (${number.format(totalKills)} mobs)`;
+        const text = `Level ${from} to ${to}: ${number.format(total)} XP; ${timeText}, using ${offsetText} at ${number.format(killSeconds)} seconds per kill.`;
+
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (error) {
+          const temporary = document.createElement("textarea");
+          temporary.value = text;
+          temporary.setAttribute("readonly", "");
+          temporary.style.position = "fixed";
+          temporary.style.opacity = "0";
+          document.body.append(temporary);
+          temporary.select();
+          document.execCommand("copy");
+          temporary.remove();
+        }
+
+        clearTimeout(toastTimer);
+        toast.classList.add("visible");
+        toastTimer = setTimeout(() => toast.classList.remove("visible"), 1800);
+      }
+
+      buildOptions();
+      updateMobOffsetOptions();
+      render();
+
+      fromSelect.addEventListener("change", () => keepRangeValid(fromSelect));
+      toSelect.addEventListener("change", () => keepRangeValid(toSelect));
+      mobOffsetSelect.addEventListener("change", render);
+      showDaysToggle.addEventListener("change", render);
+      killSecondsInput.addEventListener("input", render);
+      killSecondsInput.addEventListener("change", () => {
+        killSecondsInput.value = String(Math.max(1, Math.min(3600, Math.round(currentKillSeconds()))));
+        render();
+      });
+      document.querySelector("#copy-result").addEventListener("click", copyResult);
+      document.querySelectorAll(".quick-pick").forEach((button) => {
+        button.addEventListener("click", () => setRange(Number(button.dataset.from), Number(button.dataset.to)));
+      });
+    })();
+  </script>
+</body>
+</html>
